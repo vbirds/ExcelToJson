@@ -48,24 +48,24 @@ class ExcelToJson(Frame):
         """
         fd = FileDialog(self)
         dir = fd.go()
-        filenames = self.getFilesFromDir(dir, '.xls')
-        # print(filenames)
-        # 获取开启的线程数
-        threadnum = self.getThreadNum(len(filenames))
-        # 根据线程数对原有 filenames列表进行拆分，分配给不同线程
-        threadlist = self.splitList(filenames, threadnum)
 
-        for list in threadlist:
-            try:
-                t1 = threading.Thread(target=ExcelToJson.doConvert, args=(self, list))
-                t1.start()
-                t1.join()
-                #threads.append(t1)
-            except:
-                print("Error: unable create thread")
+        if dir:
+            filenames = self.getFilesFromDir(dir, '.xls')
+            # print(filenames)
+            # 获取开启的线程数
+            threadnum = self.getThreadNum(len(filenames))
+            # 根据线程数对原有 filenames列表进行拆分，分配给不同线程
+            threadlist = self.splitList(filenames, threadnum)
 
-        tkMessageBox.showinfo("Excel To Json", "转换成功")
+            for list in threadlist:
+                try:
+                    t1 = threading.Thread(target=ExcelToJson.doConvert, args=(self, list))
+                    t1.start()
+                    t1.join()
+                except:
+                    print("Error: unable create thread")
 
+            tkMessageBox.showinfo("Excel To Json", "转换成功")
 
     def getFilesFromDir(self, dir, filter):
         """
@@ -86,7 +86,6 @@ class ExcelToJson(Frame):
             filenames.append(filepath)
 
         return filenames
-
 
     def getThreadNum(self, filenum):
         """
@@ -118,8 +117,7 @@ class ExcelToJson(Frame):
             threadlist.append(filelist[list[0]:list[1]])
 
         threadlist.append(filelist[(0 - remaindernum):])
-        return threadlist;
-
+        return threadlist
 
     def doConvert(self, filelist):
         """
@@ -136,11 +134,10 @@ class ExcelToJson(Frame):
         :param filename: 文件路径
         :return:
         """
-
         excel_file = xlrd.open_workbook(filename)
         (filename, exten) = os.path.splitext(filename)
         outputfile = filename + '.json'
-        output = open(outputfile, 'w+')
+        output = open(outputfile, 'w+', buffering=2048)
 
         table = excel_file.sheet_by_index(0)
         nrows = table.nrows
@@ -148,31 +145,30 @@ class ExcelToJson(Frame):
         title_table = table.row_values(0)
 
         # 写开头格式
-        output.writelines('[\n')
+        output.write('[\n')
         # 写json对象
         for i in range(1, nrows):
-            output.writelines('  {\n')
-
+            output.write('  {\n')
             for j in range(ncols):
                 temp = ''
                 value = table.row(i)[j].value
 
-                if  isinstance(value, float) or isinstance(value, int):
-                    temp = "    \"%s\":%d,\n" % (title_table[j], value)
+                if  isinstance(value, float):
+                    temp = "    \"%s\":%f,\n" % (title_table[j], value)
                 elif isinstance(value, unicode):
                     temp = "    \"%s\":\"%s\",\n" % (title_table[j], value.encode('utf-8'))
                 else:
                     temp = "    \"%s\":\"%s\",\n" % (title_table[j], value)
 
-                output.writelines(temp)
+                output.write(temp)
 
             if i == (nrows - 1):
-                output.writelines('  }\n')
+                output.write('  }\n')
             else:
-                output.writelines('  },\n')
+                output.write('  },\n')
 
         # 写结尾']'
-        output.writelines(']\n')
+        output.write(']\n')
         output.close()
 
 
