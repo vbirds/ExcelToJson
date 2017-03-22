@@ -14,24 +14,24 @@ class ExcelToJson(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.pack()
-        self.createWidgets()
+        self.create_widgets()
 
-    def createWidgets(self):
+    def create_widgets(self):
         """
         初始化窗体
         :return:
         """
         self.singleLabel = Label(self, text="单个转换：")
         self.batchLabel  = Label(self, text="批量转换：")
-        self.singleConvertButton = Button(self, text="选择单文件", command=self.singleConvert)
-        self.batchConvertButton = Button(self, text="选择文件夹", command=self.batchConvert)
+        self.single_convertButton = Button(self, text="选择单文件", command=self.single_convert)
+        self.batch_convertButton = Button(self, text="选择文件夹", command=self.batch_convert)
 
         self.singleLabel.grid(row=1, column=0)
-        self.singleConvertButton.grid(row=1, column=1)
+        self.single_convertButton.grid(row=1, column=1)
         self.batchLabel.grid(row=2, column=0)
-        self.batchConvertButton.grid(row=2, column=1)
+        self.batch_convertButton.grid(row=2, column=1)
 
-    def singleConvert(self):
+    def single_convert(self):
         """
         转换单个文件为json
         """
@@ -39,10 +39,10 @@ class ExcelToJson(Frame):
         filename = fd.go()
 
         if filename:
-            self.doConvertBase(filename)
+            self.do_convert_base(filename)
             tkMessageBox.showinfo("Excel To Json", "转换成功")
 
-    def batchConvert(self):
+    def batch_convert(self):
         """
         批量转换文件为json，自动获取选择文件夹下的xls文件，转为json
         """
@@ -50,16 +50,16 @@ class ExcelToJson(Frame):
         dir = fd.go()
 
         if dir:
-            filenames = self.getFilesFromDir(dir, '.xls')
+            filenames = self.get_files(dir, '.xls')
             # print(filenames)
             # 获取开启的线程数
-            threadnum = self.getThreadNum(len(filenames))
+            threadnum = self.get_thread_num(len(filenames))
             # 根据线程数对原有 filenames列表进行拆分，分配给不同线程
-            threadlist = self.splitList(filenames, threadnum)
+            threadlist = self.split_list(filenames, threadnum)
 
             for list in threadlist:
                 try:
-                    t1 = threading.Thread(target=ExcelToJson.doConvert, args=(self, list))
+                    t1 = threading.Thread(target=ExcelToJson.do_convert, args=(self, list))
                     t1.start()
                     t1.join()
                 except:
@@ -67,7 +67,8 @@ class ExcelToJson(Frame):
 
             tkMessageBox.showinfo("Excel To Json", "转换成功")
 
-    def getFilesFromDir(self, dir, filter):
+    @staticmethod
+    def get_files(self, dir, filter):
         """
         获取当前文件夹下指定包含filter字符串的文件列表
         :param dir: 文件夹路径
@@ -87,7 +88,8 @@ class ExcelToJson(Frame):
 
         return filenames
 
-    def getThreadNum(self, filenum):
+    @staticmethod
+    def get_thread_num(self, filenum):
         """
         计算需要开启的线程数
         :param filenum: 文件列表长度
@@ -100,7 +102,8 @@ class ExcelToJson(Frame):
             return 5
         return threadnum
 
-    def splitList(self, filelist, num):
+    @staticmethod
+    def split_list(self, filelist, num):
         """
         根据线程数划分每个线程执行的文件路径列表
         :param filelist: 文件路径列表
@@ -119,16 +122,17 @@ class ExcelToJson(Frame):
         threadlist.append(filelist[(0 - remaindernum):])
         return threadlist
 
-    def doConvert(self, filelist):
+    def do_convert(self, filelist):
         """
-        转换函数，调用核心转换函数doConvertBase
+        转换函数，调用核心转换函数do_convert_base
         :param filelist: 文件列表
         :return:
         """
         for file in filelist:
-            self.doConvertBase(file)
+            self.do_convert_base(file)
 
-    def doConvertBase(self, filename):
+    @staticmethod
+    def do_convert_base(self, filename):
         """
         核心转换函数
         :param filename: 文件路径
